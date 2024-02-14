@@ -37,8 +37,8 @@ categories:
   # - visualization
 
 themes:
-  - Information Technology
-    - Data and informatics
+  # - Information Technology
+    # - Data and informatics
   # - Advanced communications
   #     - Optical communications
   #     - Quantum communications
@@ -94,7 +94,7 @@ themes:
   #     - Fuels
   #     - Sustainability
   #
-  # - Environment
+  - Environment
   #     - Air, soil and water quality
   #     - Environmental health
   #     - Greenhouse gas measurements
@@ -202,11 +202,11 @@ themes:
   #     - Systems integration
   #     - Technology commercialization
   #
-  # - Materials
+  - Materials
   #     - Ceramics
   #     - Composites
   #     - Concrete and cement
-  #     - Materials characterization
+      - Materials characterization
   #         - Composition and structure
   #         - Magnetic properties
   #         - Mechanical properties
@@ -268,7 +268,7 @@ themes:
   #     - Best practices
   #     - Leadership development
   #
-  # - Physics
+  - Physics
   #     - Atomic, molecular and quantum
   #     - Biological physics
   #     - Condensed matter
@@ -279,7 +279,7 @@ themes:
   #     - Quantum information science
   #     - Radiation
   #     - Spectroscopy
-  #     - Thermodynamics
+      - Thermodynamics
   #     - Time and frequency
   #
   # - Public safety
