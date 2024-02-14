@@ -14,7 +14,7 @@ This code base is under active development.
 
 Austin McDannald \
 austin.mcdannald@nist.gov \
-National Institute of Standards and Technology \ 
+National Institute of Standards and Technology \
 Material Measurement Laboratory \
 Materials Measurment Science Division \
 Data and AI-Driven Materials Science Group \
