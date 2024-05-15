@@ -237,3 +237,48 @@ function keep_monotonic_decreasing(x)
     indices = cumsum(truth_test[truth_test .== true])
     return mono_x, indices
 end
+
+function truncate_to_saturation(directory, name, α,
+                                Ts, Ps, βs,
+                                Henry_CO2, Henry_CO2_err,
+                                Henry_N2, Henry_N2_err)
+
+    #Read in the Saturatuion JSON
+    saturation_string = directory*"/Saturation/CO2_sat_200K_"*name*".json"
+    saturation_dict = JSON.parsefile(saturation_string)
+
+    #Find the saturation CO2 molecules per unit cell
+    step = saturation_dict["step_number"]
+    loading = saturation_dict["isotherm"]["$step"]["loading"] #[molecules CO2]
+    loading_stdev = saturation_dict["isotherm"]["$step"]["stdev"] #[molecules CO2]
+
+    #Read in the unit cell info
+    material_string = directory*"/CSD_FEASST_Materials/Materials/"*name*".json"
+    material = JSON.parsefile(material_string)
+    mass = material["cell_mass"] #[amu] or [g/mol]
+
+    #calculate the loading at saturation
+    sat_loading = loading*1e6/mass # [mmol/kg] millimoles of CO2 per kg of sorbent
+
+    #calculate the straight line isotherm to saturation from starting partial pressure
+    sat_Kh = sat_loading/(α * Ps[1])
+
+    #Mask off anywhere the Henery Constant is bigger than the straight line isotherm to saturation
+    mask = Henry_CO2 .< sat_Kh
+
+    #Use the mask to truncate the vectors
+    Ts = Ts[mask]
+    Ps = Ps[mask]
+    βs = βs[mask]
+
+    Henry_CO2 = Henry_CO2[mask]
+    Henry_CO2_err = Henry_CO2_err[mask]
+
+    Henry_N2 = Henry_N2[mask]
+    Henry_N2_err = Henry_N2_err[mask]
+
+    return Ts, Ps, βs, Henry_CO2, Henry_CO2_err, Henry_N2, Henry_N2_err
+
+
+
+

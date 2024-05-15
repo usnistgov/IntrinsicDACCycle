@@ -74,6 +74,13 @@ function Intrinisic_refresh(directory, name)
     Ps = Ps[indices]
     βs = βs[indices]
 
+    #Compare the CO2 Henry constant to Saturation uptake of CO2
+    #Truncate to a sensible range
+    Ts, Ps, βs, Henry_CO2, Henry_CO2_err, Henry_N2, Henry_N2_err = truncate_to_saturation(directory, name, α,
+                                                                                          Ts, Ps, βs, 
+                                                                                          Henry_CO2, Henry_CO2_err, 
+                                                                                          Henry_N2, Henry_N2_err) 
+
     Path_Dict["Temperatures"] = Ts
     Path_Dict["Temperature_units"] = "K"
     Path_Dict["Pressures"] = Ps
