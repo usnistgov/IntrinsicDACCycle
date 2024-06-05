@@ -285,6 +285,13 @@ function Intrinisic_refresh_path(directory::String, name::String,
     Ps = Ps[indices]
     βs = βs[indices]
 
+    #Compare the CO2 Henry constant to Saturation uptake of CO2
+    #Truncate to a sensible range
+    Ts, Ps, βs, Henry_CO2, Henry_CO2_err, Henry_N2, Henry_N2_err = truncate_to_saturation(directory, name, α,
+                                                                                          Ts, Ps, βs, 
+                                                                                          Henry_CO2, Henry_CO2_err, 
+                                                                                          Henry_N2, Henry_N2_err) 
+
     Path_Dict["Temperatures"] = Ts
     Path_Dict["Temperature_units"] = "K"
     Path_Dict["Pressures"] = Ps
@@ -473,6 +480,12 @@ function Intrinisic_refresh_objectives(directory::String, name::String,
     Ps = Ps[indices]
     βs = βs[indices]
 
+    #Compare the CO2 Henry constant to Saturation uptake of CO2
+    #Truncate to a sensible range
+    Ts, Ps, βs, Henry_CO2, Henry_CO2_err, Henry_N2, Henry_N2_err = truncate_to_saturation(directory, name, α,
+                                                                                          Ts, Ps, βs, 
+                                                                                          Henry_CO2, Henry_CO2_err, 
+                                                                                          Henry_N2, Henry_N2_err) 
 
     #Generate Equilibrium loadings along the path
     n_CO2, n_N2, d_CO2, d_N2, αs = Analytical_Henry_Generate_sorption_path(βs, Ps, α, Henry_CO2, Henry_N2) #[mmol/kg]
@@ -596,6 +609,13 @@ function Intrinisic_refresh_objectives_posterior_dist(directory::String, name::S
     Ts = Ts[indices]
     Ps = Ps[indices]
     βs = βs[indices]
+
+    #Compare the CO2 Henry constant to Saturation uptake of CO2
+    #Truncate to a sensible range
+    Ts, Ps, βs, Henry_CO2, Henry_CO2_err, Henry_N2, Henry_N2_err = truncate_to_saturation(directory, name, α,
+                                                                                          Ts, Ps, βs, 
+                                                                                          Henry_CO2, Henry_CO2_err, 
+                                                                                          Henry_N2, Henry_N2_err) 
 
     #Generate heat of adsorption along the path
     q_CO2_mean, q_CO2_err = qₐ∞(βs, Kh_CO₂) #kJ/mol of gas
