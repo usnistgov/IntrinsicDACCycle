@@ -260,11 +260,16 @@ function truncate_to_saturation(directory, name, α,
     #calculate the loading at saturation
     sat_loading = loading*1e6/mass # [mmol/kg] millimoles of CO2 per kg of sorbent
 
-    #calculate the straight line isotherm to saturation from starting partial pressure
-    sat_Kh = sat_loading/(α * Ps[1])
+    #calculate the loadings from Henry Isotherms
+    loadings_Kh = Henry_CO2 .* α .* Ps
 
-    #Mask off anywhere the Henery Constant is bigger than the straight line isotherm to saturation
-    mask = Henry_CO2 .< sat_Kh
+    #Mask where the loadings from Henry Isotherms would be bigger than saturation
+    mask = loadings_Kh .< sat_loading
+    # #calculate the straight line isotherm to saturation from starting partial pressure
+    # sat_Kh = sat_loading/(α * Ps[1])
+
+    # #Mask off anywhere the Henery Constant is bigger than the straight line isotherm to saturation
+    # mask = Henry_CO2 .< sat_Kh
 
     #Use the mask to truncate the vectors
     Ts = Ts[mask]
