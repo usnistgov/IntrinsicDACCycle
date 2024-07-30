@@ -69,7 +69,7 @@ end
 
 
 """Function to optimize the start and end temperatures and pressures 
-for a givin material and inlet CO2 concentration.
+for a given material and inlet CO2 concentration.
 Assumes a linear path,"""
 function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,  
                                     α::Real)
@@ -306,7 +306,7 @@ end
 
 
 """Function to optimize the start and end temperatures and pressures 
-for a givin material and inlet CO2 concentration.
+for a given material and inlet CO2 concentration.
 Assumes a linear path,
 With the uncertainties in performance metrics"""
 function Optimize_Intrinsic_Refresh_w_err(Base_directory::String, name::String,  
@@ -601,7 +601,7 @@ end
 
 
 """Function to optimize the start and end temperatures and pressures 
-for a givin material and inlet CO2 concentration.
+for a given material and inlet CO2 concentration.
 Assumes a linear path,
 Reports the path parameters sampled and thier performances"""
 function Optimize_Intrinsic_Refresh_path_distributions(Base_directory::String, name::String,  
