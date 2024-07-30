@@ -47,6 +47,14 @@ function ScorePath(parameters, dT_max, dP_max,
 
     ξ = outputs[1]
     α_end = outputs[2]
+    # Metaheuristics doesn't handle `missing`s but does handle `Nan`s
+    if ismissing(ξ)
+        ξ = NaN
+    end
+    if ismissing(α_end)
+        α_end = NaN
+    end
+
     objectives = [1/ξ, 1-α_end]
     gx = [0.0] # inequality constraints
     hx = [0.0] # equality constraints
