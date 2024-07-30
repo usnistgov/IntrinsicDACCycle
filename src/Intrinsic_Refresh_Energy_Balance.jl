@@ -500,7 +500,7 @@ function Intrinisic_refresh_objectives(directory::String, name::String,
 
     #If the truncation has eliminated the path, skip the intrinisic refresh
     if size(Ts)[1] == 0
-        objectives = [null, null]
+        objectives = [missing, missing]
         return objectives
     end
 
@@ -636,10 +636,10 @@ function Intrinisic_refresh_objectives_posterior_dist(directory::String, name::S
 
     #If the truncation has eliminated the path, skip the intrinisic refresh
        if size(Ts)[1] == 0
-        objectives_dist = [null, null, null, null]
+        objectives_dist = [missing, missing, missing, missing]
         return objectives_dist
     end 
-                                                                                                 
+
     #Generate heat of adsorption along the path
     q_CO2_mean, q_CO2_err = qₐ∞(βs, Kh_CO₂) #kJ/mol of gas
     q_CO2_mean  *= 10^3 #[J/mol]
