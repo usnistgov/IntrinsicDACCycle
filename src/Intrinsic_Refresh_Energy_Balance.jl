@@ -94,6 +94,11 @@ function Intrinisic_refresh(directory, name)
     Path_Dict["Henry_N2_err"] = Henry_N2_err
     Path_Dict["Henry_units"] = "mmol/(kg Pa)"
 
+    #If the truncation has eliminated the path, skip the intrinisic refresh
+    if size(Ts)[1] == 0
+        Results_Dict["Flag"] = "No path, check Henry constant or saturation calculations"
+        return Results_Dict
+    end
 
     #Generate Equilibrium loadings along the path
     n_CO2, n_N2, d_CO2, d_N2, αs = Analytical_Henry_Generate_sorption_path(βs, Ps, α, Henry_CO2, Henry_N2) #[mmol/kg]
@@ -305,6 +310,11 @@ function Intrinisic_refresh_path(directory::String, name::String,
     Path_Dict["Henry_N2_err"] = Henry_N2_err
     Path_Dict["Henry_units"] = "mmol/(kg Pa)"
 
+    #If the truncation has eliminated the path, skip the intrinisic refresh
+    if size(Ts)[1] == 0
+        Results_Dict["Flag"] = "No path, check Henry constant or saturation calculations"
+        return Results_Dict
+    end
 
     #Generate Equilibrium loadings along the path
     n_CO2, n_N2, d_CO2, d_N2, αs = Analytical_Henry_Generate_sorption_path(βs, Ps, α, Henry_CO2, Henry_N2) #[mmol/kg]
@@ -487,6 +497,13 @@ function Intrinisic_refresh_objectives(directory::String, name::String,
                                                                                           Henry_CO2, Henry_CO2_err, 
                                                                                           Henry_N2, Henry_N2_err) 
 
+
+    #If the truncation has eliminated the path, skip the intrinisic refresh
+    if size(Ts)[1] == 0
+        objectives = [null, null]
+        return objectives
+    end
+
     #Generate Equilibrium loadings along the path
     n_CO2, n_N2, d_CO2, d_N2, αs = Analytical_Henry_Generate_sorption_path(βs, Ps, α, Henry_CO2, Henry_N2) #[mmol/kg]
     n_CO2 *= 10^-3 #convert to [mol/kg]
@@ -617,6 +634,12 @@ function Intrinisic_refresh_objectives_posterior_dist(directory::String, name::S
                                                                                           Henry_CO2, Henry_CO2_err, 
                                                                                           Henry_N2, Henry_N2_err) 
 
+    #If the truncation has eliminated the path, skip the intrinisic refresh
+       if size(Ts)[1] == 0
+        objectives_dist = [null, null, null, null]
+        return objectives_dist
+    end 
+                                                                                                 
     #Generate heat of adsorption along the path
     q_CO2_mean, q_CO2_err = qₐ∞(βs, Kh_CO₂) #kJ/mol of gas
     q_CO2_mean  *= 10^3 #[J/mol]
