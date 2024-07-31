@@ -609,18 +609,18 @@ function Intrinisic_refresh_objectives_posterior_dist(directory::String, name::S
     #If extrapolating outside a reasonable range (for that material),
     # the Henry Constants will un-physically increase with increasing temperature
     #Keep only the monotonically decreasing parts of the Henry constants
-    mono_Henry_CO2, CO2_indices = keep_monotonic_decreasing(Henry_CO2)
-    mono_Henry_N2, N2_indices = keep_monotonic_decreasing(Henry_N2)
+    mono_Henry_CO2, CO2_indices = keep_monotonic_decreasing(Henry_CO2_mean)
+    mono_Henry_N2, N2_indices = keep_monotonic_decreasing(Henry_N2_mean)
     #Choose whichever set of indices is smaller
     index_lenghts = [length(CO2_indices), length(N2_indices)]
 	choice_of_indices = [CO2_indices, N2_indices]
 	indices = choice_of_indices[argmin(index_lenghts)]
 
     #Apply the index truncation to all relevant variables
-    Henry_CO2 = Henry_CO2[indices]
+    Henry_CO2_mean = Henry_CO2_mean[indices]
     Henry_CO2_err = Henry_CO2_err[indices]
 
-    Henry_N2 = Henry_N2[indices]
+    Henry_N2_mean = Henry_N2_mean[indices]
     Henry_N2_err = Henry_N2_err[indices]
 
     Ts = Ts[indices]
@@ -629,10 +629,10 @@ function Intrinisic_refresh_objectives_posterior_dist(directory::String, name::S
 
     #Compare the CO2 Henry constant to Saturation uptake of CO2
     #Truncate to a sensible range
-    Ts, Ps, βs, Henry_CO2, Henry_CO2_err, Henry_N2, Henry_N2_err = truncate_to_saturation(directory, name, α,
+    Ts, Ps, βs, Henry_CO2_mean, Henry_CO2_err, Henry_N2_mean, Henry_N2_err = truncate_to_saturation(directory, name, α,
                                                                                           Ts, Ps, βs, 
-                                                                                          Henry_CO2, Henry_CO2_err, 
-                                                                                          Henry_N2, Henry_N2_err) 
+                                                                                          Henry_CO2_mean, Henry_CO2_err, 
+                                                                                          Henry_N2_mean, Henry_N2_err) 
 
     #If the truncation has eliminated the path, skip the intrinisic refresh
        if size(Ts)[1] == 0
