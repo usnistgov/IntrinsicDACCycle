@@ -88,8 +88,8 @@ function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,
 	#do the close_enough to linear adsorption test
 	#and the saturation test before attempting the calculation
 	material, Kh_N₂, Kh_CO₂, One_atm_N₂ = read_jsons(Base_directory,name)
-	close_enough = Close_enough(Base_material, Kh_N₂, One_atm_N₂)
-	saturation_any_co2 = saturation_adsorb_co2(directory, name)
+	close_enough = Close_enough(material, Kh_N₂, One_atm_N₂)
+	saturation_any_co2 = saturation_adsorb_co2(Base_directory, name)
 	continue_test = close_enough & saturation_any_co2
 	Results_Dict["Close Enough to Linear Adsorption"] = close_enough
 	Results_Dict["Saturation Adsorb Any CO2"] = saturation_any_co2
