@@ -309,6 +309,8 @@ function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,
             
             Results_Dict["Intrinsic_capture_efficiency"][i] = ith_results["Intrinsic_capture_efficiency"]
             Results_Dict["Purity_captured_CO2"][i] = ith_results["Purity_captured_CO2"]
+
+            Path_Dict["Flag"][i] = "no flags"
         else
 			Path_Dict["Flag"][i] = "No path, check Henry constant or saturation calculations"
 		end 
@@ -630,6 +632,8 @@ function Optimize_Intrinsic_Refresh_w_err(Base_directory::String, name::String,
             Results_Dict["Intrinsic_capture_efficiency_std"][i] = std_ξ
             Results_Dict["Purity_captured_CO2"][i] = mean_α
             Results_Dict["Purity_captured_CO2_std"][i] = std_α
+
+            Path_Dict["Flag"][i] = "no flags"
         else
 			Path_Dict["Flag"][i] = "No path, check Henry constant or saturation calculations"
 		end
