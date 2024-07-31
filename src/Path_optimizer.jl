@@ -82,6 +82,21 @@ Assumes a linear path,"""
 function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,  
                                     α::Real)
 
+	#Initialize a dictionary to store all the results
+	Results_Dict = sort(Dict{String, Any}("Name" => name))
+    
+	#do the close_enough to linear adsorption test
+	#and the saturation test before attempting the calculation
+	material, Kh_N₂, Kh_CO₂, One_atm_N₂ = IntrinsicDACCycle.read_jsons(directory,name)
+	close_enough = IntrinsicDACCycle.Close_enough(material, Kh_N₂, One_atm_N₂)
+	saturation_any_co2 = saturation_adsorb_co2(directory, name)
+	continue_test = close_enough & saturation_any_co2
+	Results_Dict["Close Enough to Linear Adsorption"] = close_enough
+	Results_Dict["Saturation Adsorb Any CO2"] = saturation_any_co2
+	if continue_test == false
+		return Results_Dict
+	end
+
     #Define the limits of the parameters	
     #specify Start and total Step
 	T_start = 273.0 #[K] 
@@ -162,8 +177,7 @@ function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,
 		path_Ps[i] = collect(LinRange(path_P_start, path_P_start+path_ΔP, path_steps))
 	end
 
-    #Initialize a dictionary to store all the results and intermediates
-    Results_Dict = sort(Dict{String, Any}("Name" => name))
+    #Initialize a dictionary to store all the intermediates
     Path_Dict = sort(Dict{String, Any}("Refresh_Path" => "Definition of refresh path and material properties along that path (in per kg of sorbent basis)."))
     E_Balance_Dict = sort(Dict{String, Any}("E_Balance" => "Energy balance along path"))
     Step_1_Dict = sort(Dict{String, Any}("Step_1" => "Adsorption"))
@@ -177,10 +191,10 @@ function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,
     Path_Dict["Betas"] = Vector{Vector}(undef,num_solutions)
     Path_Dict["Beta_units"] = "mol/kJ"
 
-	Path_Dict["Henry_CO2"] = Vector{Matrix}(undef,num_solutions)
-    Path_Dict["Henry_CO2_err"] = Vector{Matrix}(undef,num_solutions)
-    Path_Dict["Henry_N2"] = Vector{Matrix}(undef,num_solutions)
-    Path_Dict["Henry_N2_err"] = Vector{Matrix}(undef,num_solutions)
+	Path_Dict["Henry_CO2"] = Vector{Vector}(undef,num_solutions)
+    Path_Dict["Henry_CO2_err"] = Vector{Vector}(undef,num_solutions)
+    Path_Dict["Henry_N2"] = Vector{Vector}(undef,num_solutions)
+    Path_Dict["Henry_N2_err"] = Vector{Vector}(undef,num_solutions)
     Path_Dict["Henry_units"] = "mmol/(kg Pa)"
 
     Path_Dict["Moles_CO2"] = Vector{Vector}(undef,num_solutions)
@@ -196,6 +210,8 @@ function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,
     Path_Dict["Specific_heat_sorbent"] = Vector{Matrix}(undef,num_solutions)
     Path_Dict["Specific_heat_sorbent_err"] = Vector{Matrix}(undef,num_solutions)
     Path_Dict["Specific_heat_sorbent_units"] = "J/(kg K)"
+
+    Path_Dict["Flag"] = Vector{String}(undef,num_solutions)
 
     Step_1_Dict["Heat_to_adsorb_CO2"] = Vector{Real}(undef,num_solutions)
     Step_1_Dict["Heat_to_adsorb_N2"] = Vector{Real}(undef,num_solutions)
@@ -238,60 +254,64 @@ function Optimize_Intrinsic_Refresh(Base_directory::String, name::String,
                                                 path_Ts[i], path_Ps[i], α)
 
         #Re-package resutls
-        ith_path_dict = ith_results["Refresh_Path"]
-        ith_e_balance_dict = ith_results["E_Balance"]
-        ith_step_1_dict = ith_e_balance_dict["Step_1"]
-        ith_step_2_dict = ith_e_balance_dict["Step_2"]
-        ith_step_3_dict = ith_e_balance_dict["Step_3"]
+        if "Refresh_Path" in keys(ith_results)
+            ith_path_dict = ith_results["Refresh_Path"]
+            ith_e_balance_dict = ith_results["E_Balance"]
+            ith_step_1_dict = ith_e_balance_dict["Step_1"]
+            ith_step_2_dict = ith_e_balance_dict["Step_2"]
+            ith_step_3_dict = ith_e_balance_dict["Step_3"]
 
-        Path_Dict["Temperatures"][i] = ith_path_dict["Temperatures"]
-        Path_Dict["Pressures"][i] = ith_path_dict["Pressures"]
-        Path_Dict["Betas"][i] = ith_path_dict["Betas"]
-        
-        Path_Dict["Henry_CO2"][i] = ith_path_dict["Henry_CO2"]
-        Path_Dict["Henry_CO2_err"][i] = ith_path_dict["Henry_CO2_err"]
-        Path_Dict["Henry_N2"][i] = ith_path_dict["Henry_N2"]
-        Path_Dict["Henry_N2_err"][i] = ith_path_dict["Henry_N2_err"]
-        
-        Path_Dict["Moles_CO2"][i] = ith_path_dict["Moles_CO2"]
-        Path_Dict["Moles_N2"][i] = ith_path_dict["Moles_N2"]
-        
-        Path_Dict["Heat_of_adsorb_CO2"][i] = ith_path_dict["Heat_of_adsorb_CO2"]
-        Path_Dict["Heat_of_adsorb_CO2_err"][i] = ith_path_dict["Heat_of_adsorb_CO2_err"]
-        Path_Dict["Heat_of_adsorb_N2"][i] = ith_path_dict["Heat_of_adsorb_N2"]
-        Path_Dict["Heat_of_adsorb_N2_err"][i] = ith_path_dict["Heat_of_adsorb_N2_err"]
-        
-        Path_Dict["Specific_heat_sorbent"][i] = ith_path_dict["Specific_heat_sorbent"]
-        Path_Dict["Specific_heat_sorbent_err"][i] = ith_path_dict["Specific_heat_sorbent_err"]
-        
-        Step_1_Dict["Heat_to_adsorb_CO2"][i] = ith_step_1_dict["Heat_to_adsorb_CO2"]
-        Step_1_Dict["Heat_to_adsorb_N2"][i] = ith_step_1_dict["Heat_to_adsorb_N2"]
-        Step_1_Dict["Work_to_adsorb_CO2"][i] = ith_step_1_dict["Work_to_adsorb_CO2"]
-        Step_1_Dict["Work_to_adsorb_N2"][i] = ith_step_1_dict["Work_to_adsorb_N2"]
+            Path_Dict["Temperatures"][i] = ith_path_dict["Temperatures"]
+            Path_Dict["Pressures"][i] = ith_path_dict["Pressures"]
+            Path_Dict["Betas"][i] = ith_path_dict["Betas"]
+            
+            Path_Dict["Henry_CO2"][i] = ith_path_dict["Henry_CO2"]
+            Path_Dict["Henry_CO2_err"][i] = ith_path_dict["Henry_CO2_err"]
+            Path_Dict["Henry_N2"][i] = ith_path_dict["Henry_N2"]
+            Path_Dict["Henry_N2_err"][i] = ith_path_dict["Henry_N2_err"]
+            
+            Path_Dict["Moles_CO2"][i] = ith_path_dict["Moles_CO2"]
+            Path_Dict["Moles_N2"][i] = ith_path_dict["Moles_N2"]
+            
+            Path_Dict["Heat_of_adsorb_CO2"][i] = ith_path_dict["Heat_of_adsorb_CO2"]
+            Path_Dict["Heat_of_adsorb_CO2_err"][i] = ith_path_dict["Heat_of_adsorb_CO2_err"]
+            Path_Dict["Heat_of_adsorb_N2"][i] = ith_path_dict["Heat_of_adsorb_N2"]
+            Path_Dict["Heat_of_adsorb_N2_err"][i] = ith_path_dict["Heat_of_adsorb_N2_err"]
+            
+            Path_Dict["Specific_heat_sorbent"][i] = ith_path_dict["Specific_heat_sorbent"]
+            Path_Dict["Specific_heat_sorbent_err"][i] = ith_path_dict["Specific_heat_sorbent_err"]
+            
+            Step_1_Dict["Heat_to_adsorb_CO2"][i] = ith_step_1_dict["Heat_to_adsorb_CO2"]
+            Step_1_Dict["Heat_to_adsorb_N2"][i] = ith_step_1_dict["Heat_to_adsorb_N2"]
+            Step_1_Dict["Work_to_adsorb_CO2"][i] = ith_step_1_dict["Work_to_adsorb_CO2"]
+            Step_1_Dict["Work_to_adsorb_N2"][i] = ith_step_1_dict["Work_to_adsorb_N2"]
 
-        E_Balance_Dict["E1"][i] = ith_e_balance_dict["E1"]
+            E_Balance_Dict["E1"][i] = ith_e_balance_dict["E1"]
+            
+            Step_2_Dict["Heat_to_desorb_CO2"][i] = ith_step_2_dict["Heat_to_desorb_CO2"]
+            Step_2_Dict["Heat_to_desorb_N2"][i] = ith_step_2_dict["Heat_to_desorb_N2"]
+            Step_2_Dict["Work_to_desorb_CO2"][i] = ith_step_2_dict["Work_to_desorb_CO2"]
+            Step_2_Dict["Work_to_desorb_N2"][i] = ith_step_2_dict["Work_to_desorb_N2"]
+            Step_2_Dict["E_to_heat_adsorbed_CO2"][i] = ith_step_2_dict["E_to_heat_adsorbed_CO2"]
+            Step_2_Dict["E_to_heat_adsorbed_N2"][i] = ith_step_2_dict["E_to_heat_adsorbed_N2"]
+            Step_2_Dict["E_to_heat_sorbent"][i] = ith_step_2_dict["E_to_heat_sorbent"]
+            Step_2_Dict["E_to_change_pressure"][i] = ith_step_2_dict["E_to_change_pressure"]
+            
+            E_Balance_Dict["E2"][i] = ith_e_balance_dict["E2"]
         
-        Step_2_Dict["Heat_to_desorb_CO2"][i] = ith_step_2_dict["Heat_to_desorb_CO2"]
-        Step_2_Dict["Heat_to_desorb_N2"][i] = ith_step_2_dict["Heat_to_desorb_N2"]
-        Step_2_Dict["Work_to_desorb_CO2"][i] = ith_step_2_dict["Work_to_desorb_CO2"]
-        Step_2_Dict["Work_to_desorb_N2"][i] = ith_step_2_dict["Work_to_desorb_N2"]
-        Step_2_Dict["E_to_heat_adsorbed_CO2"][i] = ith_step_2_dict["E_to_heat_adsorbed_CO2"]
-        Step_2_Dict["E_to_heat_adsorbed_N2"][i] = ith_step_2_dict["E_to_heat_adsorbed_N2"]
-        Step_2_Dict["E_to_heat_sorbent"][i] = ith_step_2_dict["E_to_heat_sorbent"]
-        Step_2_Dict["E_to_change_pressure"][i] = ith_step_2_dict["E_to_change_pressure"]
+            Step_3_Dict["E_recovered"][i] = ith_step_3_dict["E_recovered"]
+            E_Balance_Dict["E3"][i] = ith_e_balance_dict["E3"]
         
-        E_Balance_Dict["E2"][i] = ith_e_balance_dict["E2"]
-    
-        Step_3_Dict["E_recovered"][i] = ith_step_3_dict["E_recovered"]
-        E_Balance_Dict["E3"][i] = ith_e_balance_dict["E3"]
-    
-        E_Balance_Dict["Total_E_of_cycle"][i] = ith_e_balance_dict["Total_E_of_cycle"]
-        
-        Results_Dict["Captured_CO2"][i] = ith_results["Captured_CO2"]
-        Results_Dict["Captured_N2"][i] = ith_results["Captured_N2"]
-        
-        Results_Dict["Intrinsic_capture_efficiency"][i] = ith_results["Intrinsic_capture_efficiency"]
-        Results_Dict["Purity_captured_CO2"][i] = ith_results["Purity_captured_CO2"]
+            E_Balance_Dict["Total_E_of_cycle"][i] = ith_e_balance_dict["Total_E_of_cycle"]
+            
+            Results_Dict["Captured_CO2"][i] = ith_results["Captured_CO2"]
+            Results_Dict["Captured_N2"][i] = ith_results["Captured_N2"]
+            
+            Results_Dict["Intrinsic_capture_efficiency"][i] = ith_results["Intrinsic_capture_efficiency"]
+            Results_Dict["Purity_captured_CO2"][i] = ith_results["Purity_captured_CO2"]
+        else
+			Path_Dict["Flag"][i] = "No path, check Henry constant or saturation calculations"
+		end 
     end
 
     #Package all the dictionaries together
@@ -320,6 +340,22 @@ With the uncertainties in performance metrics"""
 function Optimize_Intrinsic_Refresh_w_err(Base_directory::String, name::String,  
                                     α::Real)
 
+    
+    #Initialize a dictionary to store all the results
+	Results_Dict = sort(Dict{String, Any}("Name" => name))
+    
+	#do the close_enough to linear adsorption test
+	#and the saturation test before attempting the calculation
+	material, Kh_N₂, Kh_CO₂, One_atm_N₂ = IntrinsicDACCycle.read_jsons(directory,name)
+	close_enough = IntrinsicDACCycle.Close_enough(material, Kh_N₂, One_atm_N₂)
+	saturation_any_co2 = saturation_adsorb_co2(directory, name)
+	continue_test = close_enough & saturation_any_co2
+	Results_Dict["Close Enough to Linear Adsorption"] = close_enough
+	Results_Dict["Saturation Adsorb Any CO2"] = saturation_any_co2
+	if continue_test == false
+		return Results_Dict
+	end
+    
     #Define the limits of the parameters	
     #specify Start and total Step
 	T_start = 273.0 #[K] 
@@ -397,8 +433,7 @@ function Optimize_Intrinsic_Refresh_w_err(Base_directory::String, name::String,
 		path_Ps[i] = collect(LinRange(path_P_start, path_P_start+path_ΔP, path_steps))
 	end
 
-    #Initialize a dictionary to store all the results and intermediates
-    Results_Dict = sort(Dict{String, Any}("Name" => name))
+    #Initialize a dictionary to store all the intermediates
     Path_Dict = sort(Dict{String, Any}("Refresh_Path" => "Definition of refresh path and material properties along that path (in per kg of sorbent basis)."))
     E_Balance_Dict = sort(Dict{String, Any}("E_Balance" => "Energy balance along path"))
     Step_1_Dict = sort(Dict{String, Any}("Step_1" => "Adsorption"))
@@ -412,10 +447,10 @@ function Optimize_Intrinsic_Refresh_w_err(Base_directory::String, name::String,
     Path_Dict["Betas"] = Vector{Vector}(undef,num_solutions)
     Path_Dict["Beta_units"] = "mol/kJ"
 
-	Path_Dict["Henry_CO2"] = Vector{Matrix}(undef,num_solutions)
-    Path_Dict["Henry_CO2_err"] = Vector{Matrix}(undef,num_solutions)
-    Path_Dict["Henry_N2"] = Vector{Matrix}(undef,num_solutions)
-    Path_Dict["Henry_N2_err"] = Vector{Matrix}(undef,num_solutions)
+	Path_Dict["Henry_CO2"] = Vector{Vector}(undef,num_solutions)
+    Path_Dict["Henry_CO2_err"] = Vector{Vector}(undef,num_solutions)
+    Path_Dict["Henry_N2"] = Vector{Vector}(undef,num_solutions)
+    Path_Dict["Henry_N2_err"] = Vector{Vector}(undef,num_solutions)
     Path_Dict["Henry_units"] = "mmol/(kg Pa)"
 
     Path_Dict["Moles_CO2"] = Vector{Vector}(undef,num_solutions)
@@ -431,6 +466,8 @@ function Optimize_Intrinsic_Refresh_w_err(Base_directory::String, name::String,
     Path_Dict["Specific_heat_sorbent"] = Vector{Matrix}(undef,num_solutions)
     Path_Dict["Specific_heat_sorbent_err"] = Vector{Matrix}(undef,num_solutions)
     Path_Dict["Specific_heat_sorbent_units"] = "J/(kg K)"
+
+    Path_Dict["Flag"] = Vector{String}(undef,num_solutions)
 
     Step_1_Dict["Heat_to_adsorb_CO2"] = Vector{Real}(undef,num_solutions)
     Step_1_Dict["Heat_to_adsorb_N2"] = Vector{Real}(undef,num_solutions)
@@ -489,108 +526,113 @@ function Optimize_Intrinsic_Refresh_w_err(Base_directory::String, name::String,
             objectives_dist = Intrinisic_refresh_objectives_posterior_dist(Base_directory, name,
                                                                                     trial_Ts, trial_Ps, α,
                                                                                     100)
-            #Test if Ts_s are not NaNs (i.e. failed Close_enough test earlier)
-            test_1 = ~any(isnan.(path_Ts[i]))
-            #Test for domain error
-            test_2 = any(isnan.(objectives_dist[1]))
-            #if it passed the Close_enough test but still created a domain error 
-            if test_1 & test_2
-                new_Ts_start = path_Ts[i][1]
-                new_Ts_end = path_Ts[i][end]
-                #Create new T steps at finer resultion
-                new_dT = (path_Ts[i][2] - path_Ts[i][1])*0.75^attempts
+            if "Refresh_Path" in keys(ith_results)
+                #Test if Ts_s are not NaNs (i.e. failed Close_enough test earlier)
+                test_1 = ~any(isnan.(path_Ts[i]))
+                #Test for domain error
+                test_2 = any(isnan.(objectives_dist[1]))
+                #if it passed the Close_enough test but still created a domain error 
+                if test_1 & test_2
+                    new_Ts_start = path_Ts[i][1]
+                    new_Ts_end = path_Ts[i][end]
+                    #Create new T steps at finer resultion
+                    new_dT = (path_Ts[i][2] - path_Ts[i][1])*0.75^attempts
 
-                new_Ps_start = path_Ps[i][1]
-                new_Ps_end = path_Ps[i][end]
-                #Create new P steps at finer resoluion
-                new_dP = (path_Ps[i][2] - path_Ps[i][1]) *0.75^attempts
+                    new_Ps_start = path_Ps[i][1]
+                    new_Ps_end = path_Ps[i][end]
+                    #Create new P steps at finer resoluion
+                    new_dP = (path_Ps[i][2] - path_Ps[i][1]) *0.75^attempts
 
-                new_path_T_steps = length(new_Ts_start:new_dT:new_Ts_end)
-                new_path_P_steps = length(new_Ps_start:new_dP:new_Ps_end)
+                    new_path_T_steps = length(new_Ts_start:new_dT:new_Ts_end)
+                    new_path_P_steps = length(new_Ps_start:new_dP:new_Ps_end)
 
-                new_path_steps = maximum([new_path_T_steps, new_path_P_steps])
+                    new_path_steps = maximum([new_path_T_steps, new_path_P_steps])
 
-            
-                #Re-define the path Ts and Ps
-                trial_Ts = collect(LinRange(new_Ts_start, new_Ts_end, new_path_steps))
-                trial_Ps = collect(LinRange(new_Ps_start, new_Ps_end, new_path_steps))
-                print("Uncertainty calculation lead to numerical instabilty, re-trying at finer step size.")
-            else
-                break
+                
+                    #Re-define the path Ts and Ps
+                    trial_Ts = collect(LinRange(new_Ts_start, new_Ts_end, new_path_steps))
+                    trial_Ps = collect(LinRange(new_Ps_start, new_Ps_end, new_path_steps))
+                    print("Uncertainty calculation lead to numerical instabilty, re-trying at finer step size.")
+                else
+                    break
+                end
             end
         end
 
-        
-        mean_ξ = mean(objectives_dist[1])
-        std_ξ = std(objectives_dist[1])
-        mean_α = mean(objectives_dist[2])
-        std_α = std(objectives_dist[2])
-        
-        mean_Δn_CO2 = mean(objectives_dist[3])
-        std_Δn_CO2 = std(objectives_dist[3])
-        mean_Δn_N2 = mean(objectives_dist[4])
-        std_Δn_N2 = std(objectives_dist[4])
-        
+        if "Refresh_Path" in keys(ith_results)
+            mean_ξ = mean(objectives_dist[1])
+            std_ξ = std(objectives_dist[1])
+            mean_α = mean(objectives_dist[2])
+            std_α = std(objectives_dist[2])
+            
+            mean_Δn_CO2 = mean(objectives_dist[3])
+            std_Δn_CO2 = std(objectives_dist[3])
+            mean_Δn_N2 = mean(objectives_dist[4])
+            std_Δn_N2 = std(objectives_dist[4])
+            
 
-        #Re-package resutls
-        ith_path_dict = ith_results["Refresh_Path"]
-        ith_e_balance_dict = ith_results["E_Balance"]
-        ith_step_1_dict = ith_e_balance_dict["Step_1"]
-        ith_step_2_dict = ith_e_balance_dict["Step_2"]
-        ith_step_3_dict = ith_e_balance_dict["Step_3"]
+            #Re-package resutls
+            ith_path_dict = ith_results["Refresh_Path"]
+            ith_e_balance_dict = ith_results["E_Balance"]
+            ith_step_1_dict = ith_e_balance_dict["Step_1"]
+            ith_step_2_dict = ith_e_balance_dict["Step_2"]
+            ith_step_3_dict = ith_e_balance_dict["Step_3"]
 
-        Path_Dict["Temperatures"][i] = ith_path_dict["Temperatures"]
-        Path_Dict["Pressures"][i] = ith_path_dict["Pressures"]
-        Path_Dict["Betas"][i] = ith_path_dict["Betas"]
-        
-        Path_Dict["Henry_CO2"][i] = ith_path_dict["Henry_CO2"]
-        Path_Dict["Henry_CO2_err"][i] = ith_path_dict["Henry_CO2_err"]
-        Path_Dict["Henry_N2"][i] = ith_path_dict["Henry_N2"]
-        Path_Dict["Henry_N2_err"][i] = ith_path_dict["Henry_N2_err"]
-        
-        Path_Dict["Moles_CO2"][i] = ith_path_dict["Moles_CO2"]
-        Path_Dict["Moles_N2"][i] = ith_path_dict["Moles_N2"]
-        
-        Path_Dict["Heat_of_adsorb_CO2"][i] = ith_path_dict["Heat_of_adsorb_CO2"]
-        Path_Dict["Heat_of_adsorb_CO2_err"][i] = ith_path_dict["Heat_of_adsorb_CO2_err"]
-        Path_Dict["Heat_of_adsorb_N2"][i] = ith_path_dict["Heat_of_adsorb_N2"]
-        Path_Dict["Heat_of_adsorb_N2_err"][i] = ith_path_dict["Heat_of_adsorb_N2_err"]
-        
-        Path_Dict["Specific_heat_sorbent"][i] = ith_path_dict["Specific_heat_sorbent"]
-        Path_Dict["Specific_heat_sorbent_err"][i] = ith_path_dict["Specific_heat_sorbent_err"]
-        
-        Step_1_Dict["Heat_to_adsorb_CO2"][i] = ith_step_1_dict["Heat_to_adsorb_CO2"]
-        Step_1_Dict["Heat_to_adsorb_N2"][i] = ith_step_1_dict["Heat_to_adsorb_N2"]
-        Step_1_Dict["Work_to_adsorb_CO2"][i] = ith_step_1_dict["Work_to_adsorb_CO2"]
-        Step_1_Dict["Work_to_adsorb_N2"][i] = ith_step_1_dict["Work_to_adsorb_N2"]
+            Path_Dict["Temperatures"][i] = ith_path_dict["Temperatures"]
+            Path_Dict["Pressures"][i] = ith_path_dict["Pressures"]
+            Path_Dict["Betas"][i] = ith_path_dict["Betas"]
+            
+            Path_Dict["Henry_CO2"][i] = ith_path_dict["Henry_CO2"]
+            Path_Dict["Henry_CO2_err"][i] = ith_path_dict["Henry_CO2_err"]
+            Path_Dict["Henry_N2"][i] = ith_path_dict["Henry_N2"]
+            Path_Dict["Henry_N2_err"][i] = ith_path_dict["Henry_N2_err"]
+            
+            Path_Dict["Moles_CO2"][i] = ith_path_dict["Moles_CO2"]
+            Path_Dict["Moles_N2"][i] = ith_path_dict["Moles_N2"]
+            
+            Path_Dict["Heat_of_adsorb_CO2"][i] = ith_path_dict["Heat_of_adsorb_CO2"]
+            Path_Dict["Heat_of_adsorb_CO2_err"][i] = ith_path_dict["Heat_of_adsorb_CO2_err"]
+            Path_Dict["Heat_of_adsorb_N2"][i] = ith_path_dict["Heat_of_adsorb_N2"]
+            Path_Dict["Heat_of_adsorb_N2_err"][i] = ith_path_dict["Heat_of_adsorb_N2_err"]
+            
+            Path_Dict["Specific_heat_sorbent"][i] = ith_path_dict["Specific_heat_sorbent"]
+            Path_Dict["Specific_heat_sorbent_err"][i] = ith_path_dict["Specific_heat_sorbent_err"]
+            
+            Step_1_Dict["Heat_to_adsorb_CO2"][i] = ith_step_1_dict["Heat_to_adsorb_CO2"]
+            Step_1_Dict["Heat_to_adsorb_N2"][i] = ith_step_1_dict["Heat_to_adsorb_N2"]
+            Step_1_Dict["Work_to_adsorb_CO2"][i] = ith_step_1_dict["Work_to_adsorb_CO2"]
+            Step_1_Dict["Work_to_adsorb_N2"][i] = ith_step_1_dict["Work_to_adsorb_N2"]
 
-        E_Balance_Dict["E1"][i] = ith_e_balance_dict["E1"]
+            E_Balance_Dict["E1"][i] = ith_e_balance_dict["E1"]
+            
+            Step_2_Dict["Heat_to_desorb_CO2"][i] = ith_step_2_dict["Heat_to_desorb_CO2"]
+            Step_2_Dict["Heat_to_desorb_N2"][i] = ith_step_2_dict["Heat_to_desorb_N2"]
+            Step_2_Dict["Work_to_desorb_CO2"][i] = ith_step_2_dict["Work_to_desorb_CO2"]
+            Step_2_Dict["Work_to_desorb_N2"][i] = ith_step_2_dict["Work_to_desorb_N2"]
+            Step_2_Dict["E_to_heat_adsorbed_CO2"][i] = ith_step_2_dict["E_to_heat_adsorbed_CO2"]
+            Step_2_Dict["E_to_heat_adsorbed_N2"][i] = ith_step_2_dict["E_to_heat_adsorbed_N2"]
+            Step_2_Dict["E_to_heat_sorbent"][i] = ith_step_2_dict["E_to_heat_sorbent"]
+            Step_2_Dict["E_to_change_pressure"][i] = ith_step_2_dict["E_to_change_pressure"]
+            
+            E_Balance_Dict["E2"][i] = ith_e_balance_dict["E2"]
         
-        Step_2_Dict["Heat_to_desorb_CO2"][i] = ith_step_2_dict["Heat_to_desorb_CO2"]
-        Step_2_Dict["Heat_to_desorb_N2"][i] = ith_step_2_dict["Heat_to_desorb_N2"]
-        Step_2_Dict["Work_to_desorb_CO2"][i] = ith_step_2_dict["Work_to_desorb_CO2"]
-        Step_2_Dict["Work_to_desorb_N2"][i] = ith_step_2_dict["Work_to_desorb_N2"]
-        Step_2_Dict["E_to_heat_adsorbed_CO2"][i] = ith_step_2_dict["E_to_heat_adsorbed_CO2"]
-        Step_2_Dict["E_to_heat_adsorbed_N2"][i] = ith_step_2_dict["E_to_heat_adsorbed_N2"]
-        Step_2_Dict["E_to_heat_sorbent"][i] = ith_step_2_dict["E_to_heat_sorbent"]
-        Step_2_Dict["E_to_change_pressure"][i] = ith_step_2_dict["E_to_change_pressure"]
+            Step_3_Dict["E_recovered"][i] = ith_step_3_dict["E_recovered"]
+            E_Balance_Dict["E3"][i] = ith_e_balance_dict["E3"]
         
-        E_Balance_Dict["E2"][i] = ith_e_balance_dict["E2"]
-    
-        Step_3_Dict["E_recovered"][i] = ith_step_3_dict["E_recovered"]
-        E_Balance_Dict["E3"][i] = ith_e_balance_dict["E3"]
-    
-        E_Balance_Dict["Total_E_of_cycle"][i] = ith_e_balance_dict["Total_E_of_cycle"]
-        
-        Results_Dict["Captured_CO2"][i] = mean_Δn_CO2
-        Results_Dict["Captured_CO2_std"][i] = std_Δn_CO2
-        Results_Dict["Captured_N2"][i] = mean_Δn_N2
-        Results_Dict["Captured_N2_std"][i] = std_Δn_N2
-        
-        Results_Dict["Intrinsic_capture_efficiency"][i] = mean_ξ
-        Results_Dict["Intrinsic_capture_efficiency_std"][i] = std_ξ
-        Results_Dict["Purity_captured_CO2"][i] = mean_α
-        Results_Dict["Purity_captured_CO2_std"][i] = std_α
+            E_Balance_Dict["Total_E_of_cycle"][i] = ith_e_balance_dict["Total_E_of_cycle"]
+            
+            Results_Dict["Captured_CO2"][i] = mean_Δn_CO2
+            Results_Dict["Captured_CO2_std"][i] = std_Δn_CO2
+            Results_Dict["Captured_N2"][i] = mean_Δn_N2
+            Results_Dict["Captured_N2_std"][i] = std_Δn_N2
+            
+            Results_Dict["Intrinsic_capture_efficiency"][i] = mean_ξ
+            Results_Dict["Intrinsic_capture_efficiency_std"][i] = std_ξ
+            Results_Dict["Purity_captured_CO2"][i] = mean_α
+            Results_Dict["Purity_captured_CO2_std"][i] = std_α
+        else
+			Path_Dict["Flag"][i] = "No path, check Henry constant or saturation calculations"
+		end
     end
 
     #Package all the dictionaries together

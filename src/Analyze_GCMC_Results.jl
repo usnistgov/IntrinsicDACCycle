@@ -282,5 +282,18 @@ function truncate_to_saturation(directory, name, α,
 end
 
 
+function saturation_adsorb_co2(directory, name)
+	#read in the saturation file
+	saturation_string = directory*"/Saturation/Saturation/CO2_sat_200K_"*name*".json"
+	saturation_dict = JSON.parsefile(saturation_string)
 
+	#Read the loading at saturation
+	step = saturation_dict["step_number"]
+	loading = saturation_dict["isotherm"]["$step"]["loading"] #[molecules CO2]
+    loading_stdev = saturation_dict["isotherm"]["$step"]["stdev"] #[molecules CO2]
+
+	#Test if the loading is larger than 0.9 molecules
+	test = loading > 0.9 
+	return test
+end
 
