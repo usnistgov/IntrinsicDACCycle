@@ -6,6 +6,16 @@ These tools provide the theoretical upper limit of the CO2 captured per energy, 
 
 There are also tools to find Pareto optimum refresh cycles for the sorbents. 
 
+## Contents
+```src``` contains the main Julia scripts for perfoming the Intrinsic DAC analysis.
+```ScriptsForRunningICD``` contains Julia scripts (as Pluto notebooks) that were run on the HPC environments that performed the Intrinsic DAC analysis.
+```FEASSTscripts``` contains the Python scripts that were used to run the FEASST calculations of adsorption properties in the HPC environments.
+```Example_FEASST_Scripts``` contains self-contained example scripts for performing FEASST calculations, assuming compatible installations of FEASST.
+    - Scripts in ```CO2_Capacity``` require FEASST version 0.22.0
+    - Scripts in ```Kh``` require FEAST version 0.19.0
+    - Scripts in ```N2_Atmospheric``` require FEASST 0.19.0
+
+
 ## Development
 
 This code base is under active development.

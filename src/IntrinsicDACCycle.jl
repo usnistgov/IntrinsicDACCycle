@@ -34,8 +34,5 @@ include("Generate_Equilibrium_Sorption.jl")
 include("Intrinsic_Refresh_Energy_Balance.jl")
 include("Path_optimizer.jl")
 
-# include("Read_and_run.jl")
-
-
 
 end

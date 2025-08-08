@@ -1,0 +1,39 @@
+{
+    "cif": "/home/dsideriu/wrk/CoREMOF-2019/structure_11660/ZOYKAB_clean.cif",
+    "feasst_particle": "../Materials/data.ZOYKAB_clean",
+    "replication": [
+        2,
+        2,
+        3
+    ],
+    "lattice_sides": [
+        26.1442,
+        26.1442,
+        33.4398
+    ],
+    "lattice_angles": [
+        90.0,
+        90.0,
+        90.0
+    ],
+    "cell_matrix": [
+        [
+            26.1442,
+            1.6008705423134117e-15,
+            2.047597201706383e-15
+        ],
+        [
+            0.0,
+            26.1442,
+            2.047597201706383e-15
+        ],
+        [
+            0.0,
+            0.0,
+            33.4398
+        ]
+    ],
+    "cell_mass": 21029.024928000315,
+    "cell_volume": 22856.745131482872,
+    "cell_density": 0.9200358496816305
+}

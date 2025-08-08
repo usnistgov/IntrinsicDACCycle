@@ -1,0 +1,51 @@
+# LAMMPS-inspired data file
+#
+#   O(1) - C(0) - O(2)
+#
+
+3 sites
+2 bonds
+1 angles
+
+2 site types
+1 bond types
+1 angle types
+
+Units
+
+length Angstrom
+energy kJ/mol
+charge elementary
+
+Site Labels
+
+0  C
+1  O
+
+Site Properties
+
+0 sigma 2.800 epsilon 0.224490417862045000 cutoff 12.0 charge  0.700
+1 sigma 3.050 epsilon 0.656842333744501000 cutoff 12.0 charge -0.350
+
+Sites
+
+0 0 0.0  0.0000 0.0
+1 1 0.0 -1.1600 0.0
+2 1 0.0  1.1600 0.0
+
+Bond Properties
+
+0 RigidBond length 1.160 delta 0.000001
+
+Bonds
+
+0 0 0 1
+1 0 0 2
+
+Angle Properties
+
+0 RigidAngle degrees 180.0 delta 0.00001
+
+Angles
+
+0 0 1 0 2
