@@ -6,6 +6,8 @@ These tools provide the theoretical upper limit of the CO2 captured per energy, 
 
 There are also tools to find Pareto optimum refresh cycles for the sorbents. 
 
+The article demonstrating the use of this work was published as: Intrinsic direct air capture, McDannald *et al.* Chem. Sci., 2025,16, 18352-18363 https://doi.org/10.1039/D5SC06099K 
+
 ## Development
 
 This code base is under active development.
